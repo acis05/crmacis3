@@ -1,0 +1,1 @@
+import {redirect} from "next/navigation";import {user} from "@/lib/auth";export default async function Home(){redirect((await user())?"/dashboard":"/login");}
