@@ -75,3 +75,20 @@ export async function deleteCustomer(f:FormData){
  if(!r.length)throw Error("Customer tidak ditemukan atau akses ditolak");
  redirect("/customers");
 }
+
+export async function saveCashflow(f:FormData){
+ const u=await user();if(!u)redirect("/login");await setup();
+ const id=val(f,"id",36),title=val(f,"title",150),month=val(f,"month",7),confidence=val(f,"confidence",20),notes=val(f,"notes",3000);
+ const projected=Number(val(f,"projected",30)),actual=Number(val(f,"actual",30));
+ if(!title||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||!["LOW","MEDIUM","HIGH","COMMITTED"].includes(confidence)||![projected,actual].every(n=>Number.isFinite(n)&&n>=0&&n<=99999999999999))throw Error("Data proyeksi tidak valid");
+ const db=sql(),ownerInput=val(f,"owner",36),owner=u.role==="ADMIN"&&ownerInput?ownerInput:u.id;
+ if(!/^[0-9a-f-]{36}$/i.test(owner)||!(await db`SELECT id FROM users WHERE id=${owner}`).length)throw Error("PIC tidak valid");
+ const lead=val(f,"lead_id",36)||null,customer=val(f,"customer_id",36)||null;
+ if(lead&&(!/^[0-9a-f-]{36}$/i.test(lead)||!(await db`SELECT id FROM leads WHERE id=${lead} AND (${u.role==="ADMIN"} OR owner=${u.id})`).length))throw Error("Lead tidak valid");
+ if(customer&&(!/^[0-9a-f-]{36}$/i.test(customer)||!(await db`SELECT id FROM customers WHERE id=${customer} AND (${u.role==="ADMIN"} OR owner=${u.id})`).length))throw Error("Customer tidak valid");
+ const date=month+"-01";
+ if(id){if(!/^[0-9a-f-]{36}$/i.test(id))throw Error("ID tidak valid");const changed=await db`UPDATE cashflows SET title=${title},month=${date},projected=${projected},actual=${actual},confidence=${confidence},notes=${notes},owner=${owner},lead_id=${lead},customer_id=${customer} WHERE id=${id} AND (${u.role==="ADMIN"} OR owner=${u.id}) RETURNING id`;if(!changed.length)throw Error("Akses ditolak");}
+ else await db`INSERT INTO cashflows(title,month,projected,actual,confidence,notes,owner,lead_id,customer_id) VALUES(${title},${date},${projected},${actual},${confidence},${notes},${owner},${lead},${customer})`;
+ redirect("/cashflow");
+}
+export async function deleteCashflow(f:FormData){const u=await user();if(!u)redirect("/login");const id=val(f,"id",36);if(!/^[0-9a-f-]{36}$/i.test(id))throw Error("ID tidak valid");await setup();await sql()`DELETE FROM cashflows WHERE id=${id} AND (${u.role==="ADMIN"} OR owner=${u.id})`;redirect("/cashflow");}

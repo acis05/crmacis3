@@ -12,6 +12,8 @@ export async function setup(){
    await t`CREATE TABLE IF NOT EXISTS activities(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),lead UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,actor UUID NOT NULL REFERENCES users(id),note TEXT NOT NULL,created_at TIMESTAMPTZ DEFAULT now())`;
    await t`CREATE TABLE IF NOT EXISTS customers(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),name TEXT NOT NULL,company TEXT NOT NULL DEFAULT '',phone TEXT NOT NULL DEFAULT '',email TEXT NOT NULL DEFAULT '',address TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',owner UUID NOT NULL REFERENCES users(id),created_at TIMESTAMPTZ NOT NULL DEFAULT now())`;
    await t`CREATE INDEX IF NOT EXISTS customers_owner_idx ON customers(owner)`;
+   await t`CREATE TABLE IF NOT EXISTS cashflows(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),title TEXT NOT NULL,customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,owner UUID NOT NULL REFERENCES users(id),month DATE NOT NULL,projected NUMERIC(16,2) NOT NULL DEFAULT 0,actual NUMERIC(16,2) NOT NULL DEFAULT 0,confidence TEXT NOT NULL DEFAULT 'MEDIUM' CHECK(confidence IN ('LOW','MEDIUM','HIGH','COMMITTED')),notes TEXT NOT NULL DEFAULT '',created_at TIMESTAMPTZ NOT NULL DEFAULT now())`;
+   await t`CREATE INDEX IF NOT EXISTS cashflows_owner_month_idx ON cashflows(owner,month)`;
    const email=process.env.ADMIN_EMAIL?.trim().toLowerCase(),password=process.env.ADMIN_PASSWORD;
    if(email&&password&&password.length>=12){const hash=await bcrypt.hash(password,12);await t`INSERT INTO users(name,email,password,role) VALUES('Administrator',${email},${hash},'ADMIN') ON CONFLICT(email) DO NOTHING`;}
   });
