@@ -58,3 +58,13 @@ Kode dan struktur ZIP telah dibuat, tetapi build end-to-end belum dapat diverifi
 
 ## Railway networking
 Atur variable `PORT=8080`, `HOSTNAME=0.0.0.0`, dan domain Target Port `8080`. Dockerfile memaksa server bind ke semua interface.
+
+## Update CRUD Leads + Customers + Diagnostik OpenAI
+- **Leads**: buka lead untuk melihat, mengedit, atau menghapus. Penghapusan lead juga menghapus riwayat aktivitasnya.
+- **Customers**: menu baru untuk tambah, lihat, edit, hapus pelanggan. Data pelanggan terpisah dari leads.
+- **Hak akses**: Admin dapat mengelola semua data; Sales hanya data miliknya. Penghapusan dicek di server.
+- **Upgrade database otomatis**: tabel `customers` ditambahkan saat pertama kali membuka halaman Customers. Tabel leads lama tidak dihapus atau direset.
+- **Analisis AI**: error 401 (API key), 429 (kuota/billing), 404 (model), 403 (izin) ditampilkan dengan pesan lebih spesifik. Jangan kirim API key atau password ke chat.
+- **Penggantian GitHub**: upload seluruh isi ZIP ke root repo yang sama, timpa file yang sudah ada. **Jangan hapus service PostgreSQL Railway**. Pastikan `DATABASE_URL` tetap mengarah ke database lama.
+- **Railway**: gunakan `PORT=8080`, `HOSTNAME=0.0.0.0`, Target Port 8080, serta DATABASE_URL, AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, OPENAI_API_KEY, OPENAI_MODEL. Jika ada perubahan variable, redeploy.
+- **Keterbatasan**: build penuh belum bisa dijalankan pada lingkungan pembuatan karena npm install timeout. Periksa Build Logs Railway setelah upload.

@@ -43,3 +43,35 @@ export async function addSales(f:FormData){
  if(!name||!/^\S+@\S+\.\S+$/.test(email)||password.length<12)throw Error("Nama/email/password tidak valid");
  await sql()`INSERT INTO users(name,email,password,role) VALUES(${name},${email},${await bcrypt.hash(password,12)},'SALES')`;redirect("/team");
 }
+
+export async function deleteLead(f:FormData){
+ const u=await user();if(!u)redirect("/login");const id=val(f,"id",36);
+ if(!/^[0-9a-f-]{36}$/i.test(id))throw Error("ID tidak valid");
+ const r=await sql()`DELETE FROM leads WHERE id=${id} AND (${u.role==="ADMIN"} OR owner=${u.id}) RETURNING id`;
+ if(!r.length)throw Error("Lead tidak ditemukan atau akses ditolak");
+ redirect("/leads");
+}
+export async function saveCustomer(f:FormData){
+ const u=await user();if(!u)redirect("/login");
+ const id=val(f,"id",36),name=val(f,"name",150),company=val(f,"company",150),phone=val(f,"phone",50),email=val(f,"email",200),address=val(f,"address",1000),notes=val(f,"notes",5000);
+ if(!name)throw Error("Nama customer wajib diisi");
+ if(email&&!/^\S+@\S+\.\S+$/.test(email))throw Error("Email tidak valid");
+ await setup();const db=sql();const requested=val(f,"owner",36);const owner=u.role==="ADMIN"&&requested?requested:u.id;
+ if(!/^[0-9a-f-]{36}$/i.test(owner)||!(await db`SELECT id FROM users WHERE id=${owner}`).length)throw Error("PIC tidak valid");
+ let target=id;
+ if(id){
+  if(!/^[0-9a-f-]{36}$/i.test(id))throw Error("ID tidak valid");
+  const r=await db`UPDATE customers SET name=${name},company=${company},phone=${phone},email=${email},address=${address},notes=${notes},owner=${owner} WHERE id=${id} AND (${u.role==="ADMIN"} OR owner=${u.id}) RETURNING id`;
+  if(!r.length)throw Error("Customer tidak ditemukan atau akses ditolak");target=r[0].id;
+ }else{
+  const r=await db`INSERT INTO customers(name,company,phone,email,address,notes,owner) VALUES(${name},${company},${phone},${email},${address},${notes},${owner}) RETURNING id`;target=r[0].id;
+ }
+ redirect("/customers/"+target);
+}
+export async function deleteCustomer(f:FormData){
+ const u=await user();if(!u)redirect("/login");const id=val(f,"id",36);
+ if(!/^[0-9a-f-]{36}$/i.test(id))throw Error("ID tidak valid");
+ await setup();const r=await sql()`DELETE FROM customers WHERE id=${id} AND (${u.role==="ADMIN"} OR owner=${u.id}) RETURNING id`;
+ if(!r.length)throw Error("Customer tidak ditemukan atau akses ditolak");
+ redirect("/customers");
+}
