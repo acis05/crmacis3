@@ -49,3 +49,9 @@ Di PowerShell Windows yang memblokir npm.ps1, pakai `npm.cmd install` dan `npm.c
 
 ## Status verifikasi
 Kode dan struktur ZIP telah dibuat, tetapi build end-to-end belum dapat diverifikasi di lingkungan pembuat karena unduhan dependensi npm tidak selesai. Jangan menganggap deployment pasti sukses sebelum melihat Build Logs Railway.
+
+## Perbaikan versi upload terbaru
+- Next.js sudah `15.3.8` sesuai versi perbaikan yang diminta Railway.
+- Dockerfile tidak lagi menyalin `/app/public`, sehingga build tidak gagal karena folder kosong yang diabaikan GitHub.
+- `public/.gitkeep` disertakan agar folder public tetap terlihat di GitHub.
+- Build lokal belum dapat dikonfirmasi karena instalasi npm mengalami timeout di lingkungan pembuat.
